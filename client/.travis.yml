@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t agentgadget/react-tests -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true agentgadget/react-tests npm run test
+
+after_success:
+  - docker build -t agentgadget/multi-client ./client
+  - docker build -t agentgadget/multi-nginx ./nginx
+  - docker build -t agentgadget/multi-server ./server
+  - docker build -t agentgadget/multi-worker ./worker
+
+  # Login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take images and push thtem to docker hub
+  - docker push agentgadget/multi-client
+  - docker push agentgadget/multi-nginx
+  - docker push agentgadget/multi-server
+  - docker push agentgadget/multi-worker
